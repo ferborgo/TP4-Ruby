@@ -3,12 +3,14 @@ Bundler.require
 #require_relative 'Controllers/ItemController'
 require './Models/Item.rb'
 require './Models/Cart.rb'
+require './Exceptions/MyExceptions.rb'
+
 ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: './db/development.sqlite3'
 
 get '/items.json' do
 	content_type :json
 	status 200
-	Item.all.to_json
+	Item.select(:id, :sku, :description).to_json
 end
 
 get '/items/:id.json' do |id|
@@ -49,7 +51,7 @@ put '/items/:id.json' do |id|
 		end
 	rescue ActiveRecord::RecordNotFound
 		status 404
-	rescue ActiveRecord::RecordInvalid
+	rescue ActiveRecord::RecordInvalid, ActiveModel::UnknownAttributeError
 		status 400
 	end
 end
@@ -73,16 +75,20 @@ end
 put '/cart/:username.json' do |username|
 	begin
 		cart = Cart.find_by!(username: username)
-		item = Item.find(params['id_item'])
-		item.stock =  item.stock - params['quantity'].to_i
-		params['quantity'].to_i.times {|n| cart.items << item}
-		status 200
+		Item.exists?(params['id_item']) ? (item = Item.find(params['id_item'])) : (raise NoItem)
+		if (params['quantity'].to_i.positive?)
+			item.stock =  item.stock - params['quantity'].to_i
+			params['quantity'].to_i.times {|n| cart.items << item}
+			status 200
+		else
+			status 400
+		end
 	rescue ActiveRecord::RecordNotFound
 		status 201
 		Cart.create!(username: username)
 		item = Item.find(params['id_item'])
 		cart.items << item
-	rescue ActiveRecord::RecordInvalid
+	rescue ActiveRecord::RecordInvalid, NoItem
 		status 400
 	end
 end	
@@ -90,17 +96,14 @@ end
 delete '/cart/:username/:item_id.json' do
 	begin
 		cart = Cart.find_by!(username: params['username'])
-		item = Item.find(params['item_id'])
-		#item.stock = item.stock + cart.items.where(id: params['item_id']).count
+		Item.exists?(params['item_id']) ? (item = Item.find(params['item_id'])) : (raise NoItem)
 		item.update!(stock: (item.stock + cart.items.where(id: params['item_id']).count))
 		cart.items.delete(item)
 		status 200
 	rescue ActiveRecord::RecordNotFound
 		status 201
 		Cart.create!(username: username).to_json
+	rescue NoItem
+		status 400
 	end
-end
-
-get '/:id' do |id|
-	Cart_Item.all.to_json
 end
