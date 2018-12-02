@@ -1,14 +1,16 @@
 require 'bundler'
 Bundler.require
-#require_relative 'Controllers/ItemController'
 require './Models/Item.rb'
 require './Models/Cart.rb'
 require './Exceptions/MyExceptions.rb'
 
 ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: './db/development.sqlite3'
 
-get '/items.json' do
+before do
 	content_type :json
+end
+
+get '/items.json' do
 	status 200
 	Item.select(:id, :sku, :description).to_json
 end
@@ -16,7 +18,7 @@ end
 get '/items/:id.json' do |id|
 	begin
 		status 200
-		content_type :json
+
 		Item.find(id).to_json
 	rescue ActiveRecord::RecordNotFound
 		status 404
@@ -26,7 +28,7 @@ end
 post '/items.json' do
 	begin
 		status 201
-		content_type :json
+
 		Item.create!(sku: params['sku'], description: params['description'], price: params['price'], stock: params['stock'])
 	#La petición es sintácticamente correcta, pero no semántica (por ejemplo, sku no es único)
 	rescue ActiveRecord::RecordNotUnique
@@ -41,7 +43,7 @@ put '/items/:id.json' do |id|
 	begin
 		#The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
 		status 204
-		content_type :json
+
 		item = Item.find(id)
 		params.delete("id")
 		if params.empty?
@@ -59,7 +61,7 @@ end
 get '/cart/:username.json' do |username|
 	begin
 		status 200
-		content_type :json
+
 		cart = Cart.find_by!(username: username)
 		h = Hash.new(0)
 		h['items'] = cart.items
