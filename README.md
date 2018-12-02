@@ -1,10 +1,13 @@
-# TP4-Ruby
-Entrega del TP4 para el TTPS opción Ruby
+# TP4-Ruby. Minimarket LLC.
 
-Antes de empezar se deben instalar las gemas definidas en el Gemfile usando el siguiente comando:
+API para el sistema on-line de ventas de la empresa Minimarket LLC.
 
-bundle
+Entrega del TP4 para el TTPS opción Ruby 2018.
+
+Las gemas necesarias están definidas en el archivo Gemfile.
 
 Para correr el servicio se debe ejecutar el siguiente comando:
 
 ruby server.rb
+
+Se utiliza ActiveRecord como ORM, Sqlite3 como motor de bd y Standalone Migrations para las migraciones.
