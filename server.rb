@@ -18,7 +18,6 @@ end
 get '/items/:id.json' do |id|
 	begin
 		status 200
-
 		Item.find(id).to_json
 	rescue ActiveRecord::RecordNotFound
 		status 404
@@ -28,7 +27,6 @@ end
 post '/items.json' do
 	begin
 		status 201
-
 		Item.create!(sku: params['sku'], description: params['description'], price: params['price'], stock: params['stock'])
 	#La petición es sintácticamente correcta, pero no semántica (por ejemplo, sku no es único)
 	rescue ActiveRecord::RecordNotUnique
@@ -43,7 +41,6 @@ put '/items/:id.json' do |id|
 	begin
 		#The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
 		status 204
-
 		item = Item.find(id)
 		params.delete("id")
 		if params.empty?
@@ -61,10 +58,9 @@ end
 get '/cart/:username.json' do |username|
 	begin
 		status 200
-
 		cart = Cart.find_by!(username: username)
 		h = Hash.new(0)
-		h['items'] = cart.items
+		h['items'] = cart.items.select(:id, :sku, :description, :price)
 		cart.items.each {|item| h['total'] += item.price}
 		h['created_at'] = cart.created_at
 		h.to_json
